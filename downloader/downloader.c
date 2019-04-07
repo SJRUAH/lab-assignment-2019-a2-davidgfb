@@ -13,11 +13,13 @@ int are_arguments_correct(int argc, char* argv[]);
 /**
  ** Main function **
  */
+
 int main(int argc, char* argv[]) {
+    
     int chunk_size;
     int i;
     int from, to;
-    int pid;
+    //int pid;
 
     if (!are_arguments_correct(argc, argv)) {
         return -1;
@@ -37,6 +39,7 @@ int main(int argc, char* argv[]) {
         printf ("%d chunks of %d bytes\n", num_processes-1, chunk_size);
         printf ("%d chunks of %ld bytes\n", 1, REMOTE_TARGET_SIZE_IN_BYTES - (chunk_size*num_processes) + chunk_size);
     }
+    
     printf ("Total %ld bytes to download \n", REMOTE_TARGET_SIZE_IN_BYTES);
 
     for (i=1; i <= num_processes; i++) {
@@ -56,6 +59,8 @@ int main(int argc, char* argv[]) {
             from = to + 1;
             to = REMOTE_TARGET_SIZE_IN_BYTES;
         }
+        
+        printf("\t chunk #%d: Range %d-%d \n", i, from, to);
 
         /**
          * TODO: Create a child process that will:
@@ -92,6 +97,7 @@ int main(int argc, char* argv[]) {
  * Example curl call:
  * curl -s -H "Range: bytes=2-3" https://localhost/testfile.txt -o filename
  */
+
 void download_fragment(char* url, long from, long to, char* outfile){
     char range[200];
     sprintf(range, "Range: bytes=%ld-%ld", from, to);
