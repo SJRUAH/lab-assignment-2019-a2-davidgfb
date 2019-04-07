@@ -60,20 +60,23 @@ int main(int argc, char* argv[]) {
             to = REMOTE_TARGET_SIZE_IN_BYTES;
         }
         
+        char outfile[200];
+        printf("%s-%d", CHUNK_FILENAME_PREFIX, i);
         printf("\t chunk #%d: Range %d-%d \n", i, from, to);
-
+        sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
+        //download_fragment(TARGET_URL, from, to, outfile);
+        
         /**
          * TODO: Create a child process that will:
          *   - Print a message showing what part it will download (mostly for
-         *   debugging purposes (i.e. printf("\t chunk #%d: Range %d-%d \n", i, from, to))
+         *   debugging purposes (i.e. printf("\t chunk #%d: Range %d-%d \n", i, from, to)) HECHO
          *   - Generate the name of the file for the current chunk, following
          *   the pattern download-1, download-2, download-i. You can do this
          *   with something like:
-         *       sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
+         *       sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i); HECHO
          *   - Call download_fragment(TARGET_URL, from, to, outfile); 
-         *   - exit(0);
+         *   - exit(0); HECHO
          */
-
 
         if (download_mode == 'S') {
             /**
@@ -91,6 +94,8 @@ int main(int argc, char* argv[]) {
          */
     }
     printf ("-- End downloader --\n");
+    
+    exit(0);
 }
 
 /**
