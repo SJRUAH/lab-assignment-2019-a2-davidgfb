@@ -2,32 +2,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/wait.h>
-
 #define TARGET_URL  "http://212.128.69.216/lolo"
 #define REMOTE_TARGET_SIZE_IN_BYTES 1047491658L
 #define CHUNK_FILENAME_PREFIX "download"
-
 void download_fragment(char* url, long from, long to, char* outfile);
 int are_arguments_correct(int argc, char* argv[]);
-
 /**
  ** Main function **
  */
-
 int main(int argc, char* argv[]) {
-    
     int chunk_size;
     int i;
     int from, to;
-    //int pid;
-
+    int pid;
+    int num_processes=atoi(argv[1]);
+    char download_mode=argv[2][0];
     if (!are_arguments_correct(argc, argv)) {
         return -1;
     }
-
-    char download_mode=argv[2][0];
-    int num_processes=atoi(argv[1]);
-
     /**
      * Calculate the chunk sizes and inform the user
      */
@@ -37,11 +29,9 @@ int main(int argc, char* argv[]) {
         printf ("%d chunks of %d bytes\n", num_processes, chunk_size);
     } else {
         printf ("%d chunks of %d bytes\n", num_processes-1, chunk_size);
-        printf ("%d chunks of %ld bytes\n", 1, REMOTE_TARGET_SIZE_IN_BYTES - (chunk_size*num_processes) + chunk_size);
+        printf ("%d chunks of %ld bytes\n", 1, REMOTE_TARGET_SIZE_IN_BYTES-(chunk_size*num_processes)+chunk_size);
     }
-    
     printf ("Total %ld bytes to download \n", REMOTE_TARGET_SIZE_IN_BYTES);
-
     for (i=1; i <= num_processes; i++) {
         /**
          * For each chunk, compute the range where to start and where to stop
@@ -59,13 +49,6 @@ int main(int argc, char* argv[]) {
             from = to + 1;
             to = REMOTE_TARGET_SIZE_IN_BYTES;
         }
-        
-        char outfile[200];
-        printf("%s-%d", CHUNK_FILENAME_PREFIX, i);
-        printf("\t chunk #%d: Range %d-%d \n", i, from, to);
-        sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
-        //download_fragment(TARGET_URL, from, to, outfile);
-        
         /**
          * TODO: Create a child process that will:
          *   - Print a message showing what part it will download (mostly for
@@ -76,33 +59,54 @@ int main(int argc, char* argv[]) {
          *       sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i); HECHO
          *   - Call download_fragment(TARGET_URL, from, to, outfile); 
          *   - exit(0); HECHO
+         *   secuencial funciona a medias
+         *   - añade funcion paralela y espera ultima descarga #
          */
-
+        char outfile[200];
+        pid = fork();
+        if (pid == 0) {
+            /**
+             * This code will be executed by the child process
+             */
+            printf("child #%d: Hi!\n",i);
+            printf("child #%d: Done! bye bye\n",i);
+            download_fragment(TARGET_URL, from, to, outfile);
+            /**
+             * Returning here will end the child execution
+             */
+            return(0);
+        }
+        sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
+        printf("%s-%d", CHUNK_FILENAME_PREFIX, i);
+        printf("\t chunk #%d: Range %d-%d \n", i, from, to);
         if (download_mode == 'S') {
             /**
              * TODO: the father must wait until the child has finished
              * downloading the current chunk if the download mode is S
              * (sequential)
              */
+            printf("father: waiting for child #%dto finish\n",i);
+            wait(NULL);
+        }
+        if (download_mode == 'P') {
+            /**
+             * TODO: wait until all the downloads have finished if the download mode
+             * is P (parallel)
+             */
+            for (i=1; i <= num_processes; i++) {
+                /*printf("father: waiting for child #%dto finish\n",i);
+                wait(NULL);*/
+            }
         }
     }
-
-    if (download_mode == 'P') {
-        /**
-         * TODO: wait until all the downloads have finished if the download mode
-         * is P (parallel)
-         */
-    }
+    printf ("-- End father --\n");
     printf ("-- End downloader --\n");
-    
     exit(0);
 }
-
 /**
  * Example curl call:
  * curl -s -H "Range: bytes=2-3" https://localhost/testfile.txt -o filename
  */
-
 void download_fragment(char* url, long from, long to, char* outfile){
     char range[200];
     sprintf(range, "Range: bytes=%ld-%ld", from, to);
@@ -110,33 +114,24 @@ void download_fragment(char* url, long from, long to, char* outfile){
     execlp("curl", "curl", "-s", "-H", range, url, "-o", outfile, NULL);
     perror("Error");
 }
-
 int are_arguments_correct(int argc, char* argv[]) {
+    char download_mode=argv[2][0];
+    int num_processes=atoi(argv[1]);
     /**
      * First, we have to check the number of arguments, and also, if the 
      * download_mode arguments is a P (parallel) or a S (sequential)
      */
     if (argc != 3 ) {
-
-        printf("error: invalid number of arguments\n"
-               "usage: %s processes {P/S} \n"
-               "\tprocesses: number of download processes to fork \n"
-               "\tdownload mode: (P) Parallel download (S) Sequential download\n", argv[0]);
+        printf("error: invalid number of arguments\n""usage: %s processes {P/S} \n""\tprocesses: number of download processes to fork \n""\tdownload mode: (P) Parallel download (S) Sequential download\n", argv[0]);
         return 0;
-
     }
-
-    char download_mode=argv[2][0];
     if (download_mode != 'P' && download_mode != 'S') {
         printf("error: invalid download mode. It has to be P or S\n");
         return 0;
     }
-
-    int num_processes=atoi(argv[1]);
     if (num_processes <=0) {
         printf("error: the number of processes has to be greater than 0\n");
         return 0;
     }
-
     return 1;
 }
