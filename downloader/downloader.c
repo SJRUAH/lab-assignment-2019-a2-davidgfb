@@ -7,8 +7,7 @@
 #define TAMANNO_OBJETIVO_REMOTO_BYTES 1047491658L //TAMAÑO ARCHIVO LOCAL
 #define PREFIJO_NOMBREARCHIVO_FRAGMENTO "descarga"
 int main(int argumento_numero, char* argumentos[]) {
-    int tamanno_fragmento, proceso_numero, desde, hasta, pid;
-    int numero_procesos=atoi(argumentos[1]); //atoi es alguna funcion array a entero de una biblioteca
+    int tamanno_fragmento, proceso_numero, desde, hasta, pid,numero_procesos=atoi(argumentos[1]); //atoi es alguna funcion array a entero de una biblioteca
     int estado;//ppt?
     char modo_descarga=argumentos[2][0],archivo_salida[200]; //ppt
     valida_argumentos(argumento_numero, argumentos); //si no son validos dara error
