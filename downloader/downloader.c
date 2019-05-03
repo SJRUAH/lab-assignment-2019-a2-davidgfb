@@ -2,71 +2,92 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#define TARGET_URL "http://212.128.69.216/lolo"
-#define REMOTE_TARGET_SIZE_IN_BYTES 1047491658L
-#define CHUNK_FILENAME_PREFIX "download"
-void download_fragment(char* url, long from, long to, char* outfile);
-int are_arguments_correct(int argc, char* argv[]);
-int main(int argc, char* argv[]) {
-    int chunk_size;
-    int i;
-    int from, to;
-    int pid;
-    int num_processes=atoi(argv[1]);
-    int status;
-    char download_mode=argv[2][0];
-    char outfile[200];
-    if (!are_arguments_correct(argc, argv)) {return -1;}
-    chunk_size = REMOTE_TARGET_SIZE_IN_BYTES/num_processes;
-    printf ("Using %d processes for download \n", num_processes);
-    if (REMOTE_TARGET_SIZE_IN_BYTES % num_processes == 0) {printf ("%d chunks of %d bytes\n",num_processes,chunk_size);}
+#include <sys/types.h>//ppt
+#define URL_OBJETIVO "http://212.128.69.216/lolo" //SUSTITUIR POR ARCHIVO LOCAL PEQUEÑO
+#define TAMANNO_OBJETIVO_REMOTO_BYTES 1047491658L //TAMAÑO ARCHIVO LOCAL
+#define PREFIJO_NOMBREARCHIVO_FRAGMENTO "descarga"
+int main(int argumento_numero, char* argumentos[]) {
+    int tamanno_fragmento, proceso_numero, desde, hasta, pid;
+    int numero_procesos=atoi(argumentos[1]); //atoi es alguna funcion array a entero de una biblioteca
+    int estado;//ppt?
+    char modo_descarga=argumentos[2][0],archivo_salida[200]; //ppt
+    valida_argumentos(argumento_numero, argumentos); //si no son validos dara error
+    tamanno_fragmento = TAMANNO_OBJETIVO_REMOTO_BYTES/numero_procesos; // Calcula los tamaños de los fragmentos e informa al usuario
+    printf ("Using %d processes for download \n", numero_procesos);
+    if (TAMANNO_OBJETIVO_REMOTO_BYTES % numero_procesos == 0) {printf ("%d fragmentos de %d bytes\n",numero_procesos,tamanno_fragmento);}
     else {
-        printf ("%d chunks of %d bytes\n", num_processes-1, chunk_size);
-        printf ("%d chunks of %ld bytes\n", 1, REMOTE_TARGET_SIZE_IN_BYTES-(chunk_size*num_processes)+chunk_size);
+        printf ("%d fragmentos de %d bytes\n", numero_procesos-1, tamanno_fragmento);
+        printf ("%d fragmentos de %ld bytes\n", 1, TAMANNO_OBJETIVO_REMOTO_BYTES-(tamanno_fragmento*numero_procesos)+tamanno_fragmento);
     }
-    printf ("Total %ld bytes to download \n", REMOTE_TARGET_SIZE_IN_BYTES);
-    for (i=1; i <= num_processes; i++) {
-        if (num_processes == 1) {
-            from = 0;
-            to = REMOTE_TARGET_SIZE_IN_BYTES;
-        } else if (i < num_processes) {
-            from = chunk_size*(i-1);
-            to = chunk_size*i-1;
-        } else {
-            from = to + 1;
-            to = REMOTE_TARGET_SIZE_IN_BYTES;
+    printf ("Total %ld bytes a descargar \n", TAMANNO_OBJETIVO_REMOTO_BYTES);
+    for (proceso_numero=1; proceso_numero <= numero_procesos; proceso_numero++) {//Para cada fragmento, calcula el rango desde el que empieza y donde para
+        if (numero_procesos == 1) {
+            desde = 0;
+            hasta = TAMANNO_OBJETIVO_REMOTO_BYTES;
+        } else if (proceso_numero < numero_procesos) {
+            desde = tamanno_fragmento*(proceso_numero-1);
+            hasta = tamanno_fragmento*proceso_numero-1;
+        } else {//El ultimo extiende el fragmento que queda hasta el final
+            desde = hasta + 1;
+            hasta = TAMANNO_OBJETIVO_REMOTO_BYTES;
         }
-        if (download_mode == 'S') {}
-        if (download_mode == 'P') {
-            for (i=1; i <= num_processes; i++) { //codigo del hijo
-                sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
-                printf("%s-%d", CHUNK_FILENAME_PREFIX, i);
-                printf("\t chunk #%d: Range %d-%d \n", i, from, to);
+        /** TODO: Crea el proceso hijo que hara:
+         *   - Escribe un mensaje mostrando el fragmento que descargara (sobre todo para propositos de depuracion
+         *  (p.ej. printf("\t fragmento #%d: Rango %d-%d \n", proceso_numero, desde, hasta))
+         *   - Genera el nombre del archivo para el fragmento actual, siguiendo el patron
+         *  descarga-1, descarga-2, descarga-i. Puedes hacer esto con algo como:
+         *       sprintf(archivo_salida, "%s-%d", PREFIJO_NOMBREARCHIVO_FRAGMENTO, proceso_numero);
+         *   - Llama a descarga_fragmento(URL_OBJETIVO, desde, hasta, archivo_); 
+         *   - exit(0);*/
+        if (modo_descarga == 'S') {
+            /**TODO: el padre debe esperar hasta que el hijo haya terminado de
+             * descargar el fragmento actual si el modo de descarga es S
+             * (sequencial)*/
+        }
+        if (modo_descarga == 'P') {
+            for (proceso_numero=1; proceso_numero <= numero_procesos; proceso_numero++) { //codigo del hijo
+                /**TODO: espera hasta que todas las descargas hayan terminado si el modo de descarga
+                * es P (paralelo)*/
+                sprintf(archivo_salida, "%s-%d", PREFIJO_NOMBREARCHIVO_FRAGMENTO, proceso_numero);
+                printf("%s-%d", PREFIJO_NOMBREARCHIVO_FRAGMENTO, proceso_numero);
+                printf("\t fragmento #%d: Rango %d-%d \n", proceso_numero, desde, hasta);
             }
         }
-        sprintf(outfile, "%s-%d", CHUNK_FILENAME_PREFIX, i);
-        printf("%s-%d", CHUNK_FILENAME_PREFIX, i);
-        printf("\t chunk #%d: Range %d-%d \n", i, from, to);
-        }
-    printf ("-- End father and downloader --\n");
+        sprintf(archivo_salida, "%s-%d", PREFIJO_NOMBREARCHIVO_FRAGMENTO, proceso_numero);
+        printf("%s-%d", PREFIJO_NOMBREARCHIVO_FRAGMENTO, proceso_numero);
+        printf("\t fragmento #%d: Rango %d-%d \n", proceso_numero, desde, hasta);
+    }
+    printf ("-- Finaliza padre y downloader --\n");
     exit(0);
 }
-void download_fragment(char* url, long from, long to, char* outfile) {
-    char range[200];
-    sprintf(range, "Range: bytes=%ld-%ld", from, to);
-    printf("Testing %s\n",range);
-    execlp("curl", "curl", "-s", "-H", range, url, "-o", outfile, NULL);
-    perror("Error");
+/**Ejemplo llamada curl :
+ * curl -s -H "Rango: bytes=2-3" https://localhost/testfile.txt -o nombrearchivo */
+//void descarga_fragmento(char* url, long desde, long hasta, char* archivo_salida);
+void descarga_fragmento(char* url, long desde, long hasta, char* archivo_salida) {
+    char rango[200];
+    sprintf(rango, "Rango: bytes=%ld-%ld", desde, hasta);
+    printf("Probando %s\n",rango);
+    execl("curl", "curl", "-s", "-H", rango, url, "-o", archivo_salida, NULL);
+    perror("Error"); //no deberia llegar hasta aqui ya que execlp reemplaza el codigo del proceso
 }
-int are_arguments_correct(int argc, char* argv[]) {
-    char download_mode=argv[2][0];
-    int num_processes=atoi(argv[1]);
-    int correcto=0;
-    if (argc != 3 ) {printf("error: invalid number of arguments\n""usage: %s processes {P/S} \n""\tprocesses: number of download processes to fork \n""\tdownload mode: (P) Parallel download (S) Sequential download\n", argv[0]);}
-    if (download_mode != 'P' && download_mode != 'S') {printf("error: invalid download mode. It has to be P or S\n");}
-    if (num_processes <=0) {printf("error: the number of processes has to be greater than 0\n");}
-    correcto=1;
-    return correcto;
+//int valida_argumentos(int numero_argumento, char* argumentos[]);
+int valida_argumentos(int numero_argumento, char* argumentos[]) {
+    /**Primero,tenemos que comprobar el numero de argumentos, tambien, si el modo_descarga de
+     *  argumentos es P (paralelo) o S (secuencial)*/
+    char modo_descarga=argumentos[2][0];
+    int numero_procesos=atoi(argumentos[1]);
+    int error=-1;//si no cumple ninguna de las condiciones dara error | tiene que cumplir al menos 1 para que no de error
+    if (numero_argumento != 3 ) {
+        printf("error: numero invalido de argumentos\n uso: %s procesos {P/S} \n \t procesos: numero de procesos a descargar para fork \n \t modo descarga: (P) descarga paralela  (S) descarga secuencial \n", argumentos[0]);
+        error=0;
+    }
+    if (modo_descarga != 'P' && modo_descarga != 'S') {
+        printf("error: modo descarga invalido. Tiene que ser P o S \n");
+        error=0;
+    }
+    if (numero_procesos <=0) {
+        printf("error: el numero de procesos tiene que ser mayor que 0 \n");
+        error=0;
+    }
+    exit(error);
 }
