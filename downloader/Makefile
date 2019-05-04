@@ -1,6 +1,6 @@
 .PHONY: clean
 
-all: downloader
+all: clean downloader
 
 CC=gcc
 CFLAGS=-g -Wall
