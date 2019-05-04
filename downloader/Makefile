@@ -19,4 +19,4 @@ downloader.o: downloader.c
 
 clean:
 	@rm -rf *.o downloader
-	@rm -rf download-*
+	@rm -rf descarga-*

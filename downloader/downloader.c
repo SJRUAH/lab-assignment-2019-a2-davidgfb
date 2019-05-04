@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>//biblioteca para el wait
 //#define URL_OBJETIVO "http://212.128.69.216/lolo" //SUSTITUIR POR ARCHIVO LOCAL PEQUEÑO
-#define URL_OBJETIVO "archivo"
+#define URL_OBJETIVO "file:///Volumes/mac/Users/david/lab-assignment-2019-a2-davidgfb/downloader/archivo"
 //#define TAMANNO_OBJETIVO_REMOTO_BYTES 1047491658L 
 #define TAMANNO_OBJETIVO_REMOTO_BYTES 5868L //TAMAÑO ARCHIVO LOCAL d3fa600db6d81dcd94b531315c60a433
 #define PREFIJO_NOMBREARCHIVO_FRAGMENTO "descarga"
@@ -34,7 +34,7 @@ void descarga_fragmento(char* url, long desde, long hasta, char* archivo_salida)
     char rango[200];
     sprintf(rango, "Range: bytes=%ld-%ld", desde, hasta);//no vale rango!
     printf("Probando %s\n",rango);
-    execlp("curl", "curl", "-s", "-H", rango, url, "-o", archivo_salida, NULL);
+    execlp("curl", "curl", "-s", "-H", rango, url, "-o", archivo_salida, NULL); //ignora clp
     perror("Error"); //no deberia llegar hasta aqui ya que execlp reemplaza el codigo del proceso
 }
 int main(int argumento_numero, char* argumentos[]) {
