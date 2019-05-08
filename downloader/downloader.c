@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <sys/wait.h>
 #include <sys/types.h>//biblioteca para el wait
-#define URL_OBJETIVO "http://212.128.69.216/lolo2.txt"
-#define TAMANNO_OBJETIVO_REMOTO_BYTES 333L 
+#define URL_OBJETIVO "http://212.128.69.216/lolo"
+#define TAMANNO_OBJETIVO_REMOTO_BYTES 1047491658L 
 #define PREFIJO_NOMBREARCHIVO_FRAGMENTO "descarga"
 int valida_argumentos(int numero_argumento, char* argumentos[]) {
     /**Primero,tenemos que comprobar el numero de argumentos, tambien, si el modo_descarga de
@@ -34,7 +34,7 @@ void descargaFragmento(char* url, long desde, long hasta, char* archivo_salida) 
     perror("Error"); //no deberia llegar hasta aqui ya que execlp reemplaza el codigo del proceso
 }
 int main(int procesos, char* descarga[]) {
-    int tamanno_fragmento, desde, hasta, pid,numeroProcesos=atoi(descarga[1]); 
+    int tamanno_fragmento, proceso,desde, hasta, pid,numeroProcesos=atoi(descarga[1]); 
     char archivo_salida[200],modoDescarga=descarga[2][0]; //nombre del archivo
     valida_argumentos(procesos, descarga); //si no son validos dara error
     tamanno_fragmento = TAMANNO_OBJETIVO_REMOTO_BYTES/numeroProcesos; // Calcula los tamaños de los fragmentos e informa al usuario
@@ -45,7 +45,7 @@ int main(int procesos, char* descarga[]) {
         printf ("%d fragmento de %ld bytes\n", 1, TAMANNO_OBJETIVO_REMOTO_BYTES-(tamanno_fragmento*numeroProcesos)+tamanno_fragmento);
     }
     printf ("Total %ld bytes a descargar \n", TAMANNO_OBJETIVO_REMOTO_BYTES);
-    for (int proceso=1; proceso <= numeroProcesos; proceso++) {
+    for (proceso=1; proceso <= numeroProcesos; proceso++) {
         pid = fork();
         if (numeroProcesos == 1) {
             desde = 0;
@@ -72,7 +72,7 @@ int main(int procesos, char* descarga[]) {
         }
     }
     if (modoDescarga == 'P') {
-        for (int proceso=1; proceso <= numeroProcesos; proceso++) {
+        for (proceso=1; proceso <= numeroProcesos; proceso++) {
             printf("padre: esperando a que el hijo #%d finalice\n",proceso);
             wait(NULL);
         }
